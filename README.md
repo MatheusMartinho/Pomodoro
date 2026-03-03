@@ -1,36 +1,66 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Agentic Tracker
 
-## Getting Started
+Seu sistema pessoal de progresso: pomodoros, hábitos, rotação sazonal, e a motivação que vem de ver os números.
 
-First, run the development server:
+## O Conceito
+
+Um app pessoal que combina 3 coisas que não existem juntas:
+- **Habit tracker com pisos mínimos** (não só 'fiz/não fiz', mas quanto)
+- **Timer pomodoro integrado** (que automaticamente loga tempo no hábito)
+- **Dashboard de progresso** que mostra dados acumulados ao longo do tempo
+
+## Stack
+
+- **Frontend:** Next.js 14 + Tailwind CSS + App Router
+- **Database:** SQLite no browser (sql.js) - 100% offline-first
+- **Charts:** Recharts
+- **State:** Zustand
+- **Deploy:** Vercel (ou qualquer host estático)
+
+## Setup
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Acesse [http://localhost:3000](http://localhost:3000)
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+**Pronto!** Não precisa de backend, banco de dados externo, ou configuração. Todos os dados são salvos localmente no browser usando SQLite (sql.js) e persistidos no localStorage.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Telas
 
-## Learn More
+| Tela | Descrição |
+|------|-----------|
+| **HOJE** | Lista de hábitos com barra de progresso tripla (mínimo/meta/máximo), quick log, e alerta "Nunca Falhe 2x" |
+| **TIMER** | Pomodoro circular que auto-loga no hábito selecionado |
+| **SEMANA** | Grid colorido estilo GitHub contributions |
+| **DASHBOARD** | Horas acumuladas, heatmap anual, distribuição por categoria |
+| **TEMPORADA** | Ciclos de 6-8 semanas com reflexão |
+| **CONFIG** | Gerenciar hábitos (criar, editar, desativar) |
 
-To learn more about Next.js, take a look at the following resources:
+## Modelo de Dados
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- **habits:** Definição dos hábitos com mínimo/meta/máximo
+- **entries:** Logs diários de cada hábito
+- **pomodoro_sessions:** Sessões individuais de pomodoro
+- **seasons:** Rotação sazonal (ciclos de 6-8 semanas)
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Gamificação Sutil
 
-## Deploy on Vercel
+- **Streaks:** Dias consecutivos que atingiu o mínimo
+- **Milestones:** '100 horas de Deep Work', '500 páginas lidas'
+- **Nível do dia:** 'Dia Mínimo', 'Dia Sólido', 'Dia Monstro'
+- **Weekly score:** mínimo = 1pt, meta = 2pts, máximo = 3pts
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Deploy
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```bash
+npm run build
+```
+
+Deploy automático via Vercel conectando o repositório GitHub.
+
+## Licença
+
+MIT
