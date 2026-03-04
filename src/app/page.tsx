@@ -1,19 +1,32 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { HabitCard } from '@/components/habits/habit-card';
 import { PomodoroTimer } from '@/components/timer/pomodoro-timer';
 import { useHabits } from '@/hooks/use-habits';
 import { useTimerStore } from '@/lib/store/timer-store';
-import { getDayLevel } from '@/lib/utils';
+import { getDayLevel, getToday } from '@/lib/utils';
 import { X } from 'lucide-react';
+import { getAllEntries } from '@/lib/db/habits-service';
 
 export default function HomePage() {
   const { habits, loading, error, updateEntry, logPomodoro } = useHabits();
   const { setHabit, habitId } = useTimerStore();
   const [showTimer, setShowTimer] = useState(false);
+
+  // Debug: verificar o que está no banco
+  useEffect(() => {
+    const debugEntries = async () => {
+      const entries = await getAllEntries();
+      const todayStr = getToday();
+      console.log('[DEBUG] Todas as entries:', entries);
+      console.log('[DEBUG] Hoje:', todayStr);
+      console.log('[DEBUG] Entries de hoje:', entries.filter(e => e.date === todayStr));
+    };
+    debugEntries();
+  }, []);
 
   const today = new Date();
   const dayName = format(today, 'EEEE', { locale: ptBR });

@@ -40,15 +40,20 @@ export function useHabits() {
     try {
       await logPomodoroSession(habitId, durationMinutes, note);
       
-      const habit = habits.find((h) => h.id === habitId);
+      // Buscar valor atual diretamente do banco para evitar stale closure
+      const freshHabits = await getHabitsWithEntries(today, yesterday);
+      const habit = freshHabits.find((h) => h.id === habitId);
       const currentValue = habit?.todayEntry?.value || 0;
       
       await upsertEntry(habitId, today, currentValue + durationMinutes, 1);
-      await fetchHabits();
+      
+      // Atualizar estado com dados frescos
+      const updatedHabits = await getHabitsWithEntries(today, yesterday);
+      setHabits([...updatedHabits]);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erro ao registrar pomodoro');
     }
-  }, [habits, today, fetchHabits]);
+  }, [today, yesterday]);
 
   useEffect(() => {
     fetchHabits();
