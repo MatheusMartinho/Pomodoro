@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useCallback, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Play, Pause, RotateCcw, Coffee } from 'lucide-react';
 import { useTimerStore } from '@/lib/store/timer-store';
 import { cn, formatTime } from '@/lib/utils';
@@ -26,28 +26,11 @@ export function PomodoroTimer({ onComplete, onClose }: PomodoroTimerProps) {
     setDuration,
   } = useTimerStore();
 
-  const [showNoteInput, setShowNoteInput] = useState(false);
-  const [note, setNote] = useState('');
   const [showBreakPrompt, setShowBreakPrompt] = useState(false);
+  const [isBreak, setIsBreak] = useState(false);
 
   const progress = ((duration - remaining) / duration) * 100;
   const durationMinutes = duration / 60;
-
-  const handleComplete = useCallback(() => {
-    if (habitId) {
-      onComplete(habitId, durationMinutes, note || undefined);
-      completePomodoro();
-      setNote('');
-      setShowNoteInput(false);
-      setShowBreakPrompt(true);
-      
-      if ('Notification' in window && Notification.permission === 'granted') {
-        new Notification('Pomodoro Completo! 🍅', {
-          body: `${durationMinutes} minutos de ${habitName} registrados.`,
-        });
-      }
-    }
-  }, [habitId, durationMinutes, note, habitName, onComplete, completePomodoro]);
 
   useEffect(() => {
     let interval: NodeJS.Timeout;
@@ -55,12 +38,34 @@ export function PomodoroTimer({ onComplete, onClose }: PomodoroTimerProps) {
     if (isRunning && remaining > 0) {
       interval = setInterval(tick, 1000);
     } else if (remaining === 0 && isRunning) {
-      setShowNoteInput(true);
       pause();
+      
+      if (isBreak) {
+        // Pausa terminou - voltar para 25 min de trabalho
+        setIsBreak(false);
+        setDuration(25);
+        
+        if ('Notification' in window && Notification.permission === 'granted') {
+          new Notification('Pausa terminada! ☕', {
+            body: 'Hora de voltar ao trabalho!',
+          });
+        }
+      } else if (habitId) {
+        // Pomodoro de trabalho terminou - salvar e oferecer pausa
+        onComplete(habitId, durationMinutes, undefined);
+        completePomodoro();
+        setShowBreakPrompt(true);
+        
+        if ('Notification' in window && Notification.permission === 'granted') {
+          new Notification('Pomodoro Completo! 🍅', {
+            body: `${durationMinutes} minutos de ${habitName} registrados.`,
+          });
+        }
+      }
     }
 
     return () => clearInterval(interval);
-  }, [isRunning, remaining, tick, pause]);
+  }, [isRunning, remaining, tick, pause, habitId, durationMinutes, habitName, onComplete, completePomodoro, isBreak, setDuration]);
 
   useEffect(() => {
     if ('Notification' in window && Notification.permission === 'default') {
@@ -70,8 +75,30 @@ export function PomodoroTimer({ onComplete, onClose }: PomodoroTimerProps) {
 
   const handleStartBreak = (minutes: number) => {
     setShowBreakPrompt(false);
+    setIsBreak(true);
     setDuration(minutes);
     start();
+  };
+
+  const handleSkipBreak = () => {
+    setShowBreakPrompt(false);
+    setIsBreak(false);
+    setDuration(25);
+  };
+
+  const handleClose = () => {
+    // Calcular tempo estudado (em minutos)
+    const elapsedSeconds = duration - remaining;
+    const elapsedMinutes = Math.floor(elapsedSeconds / 60);
+    
+    // Se estudou pelo menos 1 minuto e não é pausa, salvar o tempo parcial
+    if (elapsedMinutes > 0 && habitId && !isBreak) {
+      onComplete(habitId, elapsedMinutes, undefined);
+    }
+    
+    // Resetar o timer e fechar
+    reset();
+    onClose?.();
   };
 
   if (!habitId) {
@@ -121,30 +148,10 @@ export function PomodoroTimer({ onComplete, onClose }: PomodoroTimerProps) {
             {formatTime(remaining)}
           </span>
           <span className="text-sm text-zinc-400 mt-2">
-            {durationMinutes} min
+            {isBreak ? 'Pausa' : `${durationMinutes} min`}
           </span>
         </div>
       </div>
-
-      {/* Note input when timer completes */}
-      {showNoteInput && (
-        <div className="w-full max-w-sm mb-6">
-          <input
-            type="text"
-            value={note}
-            onChange={(e) => setNote(e.target.value)}
-            placeholder="O que você estudou? (opcional)"
-            className="w-full px-4 py-3 bg-zinc-800 border border-zinc-700 rounded-lg text-white placeholder-zinc-500 focus:outline-none focus:border-zinc-600"
-            onKeyDown={(e) => e.key === 'Enter' && handleComplete()}
-          />
-          <button
-            onClick={handleComplete}
-            className="w-full mt-3 px-6 py-3 bg-green-600 hover:bg-green-500 text-white rounded-lg font-medium transition-colors"
-          >
-            Salvar Pomodoro
-          </button>
-        </div>
-      )}
 
       {/* Break prompt */}
       {showBreakPrompt && (
@@ -167,7 +174,7 @@ export function PomodoroTimer({ onComplete, onClose }: PomodoroTimerProps) {
               15 min
             </button>
             <button
-              onClick={() => setShowBreakPrompt(false)}
+              onClick={handleSkipBreak}
               className="flex-1 px-4 py-2 bg-zinc-700 hover:bg-zinc-600 text-zinc-400 rounded-lg text-sm transition-colors"
             >
               Pular
@@ -177,7 +184,7 @@ export function PomodoroTimer({ onComplete, onClose }: PomodoroTimerProps) {
       )}
 
       {/* Controls */}
-      {!showNoteInput && !showBreakPrompt && (
+      {!showBreakPrompt && (
         <div className="flex items-center gap-4">
           <button
             onClick={reset}
@@ -202,7 +209,7 @@ export function PomodoroTimer({ onComplete, onClose }: PomodoroTimerProps) {
           </button>
           {onClose && (
             <button
-              onClick={onClose}
+              onClick={handleClose}
               className="p-3 bg-zinc-800 hover:bg-zinc-700 text-zinc-400 rounded-full transition-colors"
             >
               ✕
@@ -212,7 +219,7 @@ export function PomodoroTimer({ onComplete, onClose }: PomodoroTimerProps) {
       )}
 
       {/* Duration selector */}
-      {!isRunning && !showNoteInput && !showBreakPrompt && (
+      {!isRunning && !showBreakPrompt && (
         <div className="flex gap-2 mt-6">
           {[25, 50].map((mins) => (
             <button

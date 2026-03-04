@@ -54,7 +54,7 @@ export default function DashboardPage() {
             .filter(e => pageHabits.includes(e.habit_id))
             .reduce((sum, e) => sum + e.value, 0);
 
-          const totalPomodoros = entriesData.reduce((sum, e) => sum + e.pomodoros, 0);
+          const totalPomodoros = entriesData.reduce((sum, e) => sum + (e.pomodoros || 0), 0);
 
           const uniqueDays = new Set(entriesData.filter(e => e.value > 0).map(e => e.date));
           const daysInYear = eachDayOfInterval({ start: startOfYear(new Date()), end: new Date() });
@@ -221,7 +221,7 @@ export default function DashboardPage() {
       <section>
         <h2 className="text-sm font-medium text-zinc-400 mb-3">Records Pessoais</h2>
         <div className="space-y-2">
-          {habits.slice(0, 3).map((habit) => {
+          {habits.map((habit) => {
             const habitEntries = entries.filter(e => e.habit_id === habit.id);
             const maxDay = habitEntries.reduce((max, e) => e.value > max ? e.value : max, 0);
             const streak = habitEntries.filter(e => e.value >= habit.minimum).length;

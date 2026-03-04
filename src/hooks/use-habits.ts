@@ -29,11 +29,12 @@ export function useHabits() {
   const updateEntry = useCallback(async (habitId: string, value: number, pomodoros?: number) => {
     try {
       await upsertEntry(habitId, today, value, pomodoros);
-      await fetchHabits();
+      const habitsWithEntries = await getHabitsWithEntries(today, yesterday);
+      setHabits([...habitsWithEntries]);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erro ao atualizar entry');
     }
-  }, [today, fetchHabits]);
+  }, [today, yesterday]);
 
   const logPomodoro = useCallback(async (habitId: string, durationMinutes: number, note?: string) => {
     try {

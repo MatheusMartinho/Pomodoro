@@ -21,10 +21,10 @@ export function HabitCard({ habit, onQuickLog, onStartTimer }: HabitCardProps) {
   const failedYesterday = yesterdayValue < habit.minimum;
   const isTimeBased = habit.unit === 'minutos';
 
-  const handleQuickLog = () => {
+  const handleQuickLog = async () => {
     const value = parseInt(inputValue, 10);
     if (!isNaN(value) && value > 0) {
-      onQuickLog(habit.id, currentValue + value);
+      await onQuickLog(habit.id, currentValue + value);
       setInputValue('');
       setIsLogging(false);
     }
@@ -108,6 +108,7 @@ export function HabitCard({ habit, onQuickLog, onStartTimer }: HabitCardProps) {
               className="flex-1 px-3 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white text-sm focus:outline-none focus:border-zinc-600"
             />
             <button
+              type="button"
               onClick={handleQuickLog}
               className="px-4 py-2 bg-green-600 hover:bg-green-500 text-white rounded-lg text-sm font-medium transition-colors"
             >

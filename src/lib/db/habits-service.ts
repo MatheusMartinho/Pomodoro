@@ -177,14 +177,50 @@ export async function deleteHabit(id: string): Promise<void> {
 
 export async function getEntriesByDate(date: string): Promise<Entry[]> {
   const db = await getDatabase();
-  const result = db.exec(`SELECT * FROM entries WHERE date = '${date}'`);
-  return parseRows<Entry>(result);
+  const stmt = db.prepare(`SELECT * FROM entries WHERE date = ?`);
+  stmt.bind([date]);
+  
+  const entries: Entry[] = [];
+  while (stmt.step()) {
+    const row = stmt.getAsObject();
+    entries.push({
+      id: String(row.id),
+      habit_id: String(row.habit_id),
+      date: String(row.date),
+      value: Number(row.value),
+      pomodoros: Number(row.pomodoros),
+      note: row.note ? String(row.note) : null,
+      created_at: String(row.created_at),
+      updated_at: String(row.updated_at),
+    });
+  }
+  stmt.free();
+  
+  return entries;
 }
 
 export async function getEntriesByDateRange(startDate: string, endDate: string): Promise<Entry[]> {
   const db = await getDatabase();
-  const result = db.exec(`SELECT * FROM entries WHERE date >= '${startDate}' AND date <= '${endDate}'`);
-  return parseRows<Entry>(result);
+  const stmt = db.prepare(`SELECT * FROM entries WHERE date >= ? AND date <= ?`);
+  stmt.bind([startDate, endDate]);
+  
+  const entries: Entry[] = [];
+  while (stmt.step()) {
+    const row = stmt.getAsObject();
+    entries.push({
+      id: String(row.id),
+      habit_id: String(row.habit_id),
+      date: String(row.date),
+      value: Number(row.value) || 0,
+      pomodoros: Number(row.pomodoros) || 0,
+      note: row.note ? String(row.note) : null,
+      created_at: String(row.created_at),
+      updated_at: String(row.updated_at),
+    });
+  }
+  stmt.free();
+  
+  return entries;
 }
 
 export async function upsertEntry(habitId: string, date: string, value: number, pomodoros?: number): Promise<void> {
@@ -195,17 +231,10 @@ export async function upsertEntry(habitId: string, date: string, value: number, 
   if (existing.length && existing[0] && existing[0].values && existing[0].values.length) {
     const currentPomodoros = Number(existing[0].values[0][4]) || 0;
     const newPomodoros = pomodoros !== undefined ? currentPomodoros + pomodoros : currentPomodoros;
-    db.run(`
-      UPDATE entries 
-      SET value = ${value}, pomodoros = ${newPomodoros}, updated_at = datetime('now')
-      WHERE habit_id = '${habitId}' AND date = '${date}'
-    `);
+    db.run(`UPDATE entries SET value = ${value}, pomodoros = ${newPomodoros}, updated_at = datetime('now') WHERE habit_id = '${habitId}' AND date = '${date}'`);
   } else {
     const id = generateId();
-    db.run(`
-      INSERT INTO entries (id, habit_id, date, value, pomodoros)
-      VALUES ('${id}', '${habitId}', '${date}', ${value}, ${pomodoros || 0})
-    `);
+    db.run(`INSERT INTO entries (id, habit_id, date, value, pomodoros) VALUES ('${id}', '${habitId}', '${date}', ${value}, ${pomodoros || 0})`);
   }
   
   save();
@@ -231,14 +260,31 @@ export async function getHabitsWithEntries(today: string, yesterday: string): Pr
   
   return habits.map((habit) => ({
     ...habit,
-    todayEntry: todayEntries.find((e) => e.habit_id === habit.id) || null,
-    yesterdayEntry: yesterdayEntries.find((e) => e.habit_id === habit.id) || null,
+    todayEntry: todayEntries.find((e) => String(e.habit_id) === String(habit.id)) || null,
+    yesterdayEntry: yesterdayEntries.find((e) => String(e.habit_id) === String(habit.id)) || null,
     streak: 0,
   }));
 }
 
 export async function getAllEntries(): Promise<Entry[]> {
   const db = await getDatabase();
-  const result = db.exec(`SELECT * FROM entries ORDER BY date DESC`);
-  return parseRows<Entry>(result);
+  const stmt = db.prepare(`SELECT * FROM entries ORDER BY date DESC`);
+  
+  const entries: Entry[] = [];
+  while (stmt.step()) {
+    const row = stmt.getAsObject();
+    entries.push({
+      id: String(row.id),
+      habit_id: String(row.habit_id),
+      date: String(row.date),
+      value: Number(row.value) || 0,
+      pomodoros: Number(row.pomodoros) || 0,
+      note: row.note ? String(row.note) : null,
+      created_at: String(row.created_at),
+      updated_at: String(row.updated_at),
+    });
+  }
+  stmt.free();
+  
+  return entries;
 }
