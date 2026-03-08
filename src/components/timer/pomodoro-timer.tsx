@@ -22,6 +22,7 @@ export function PomodoroTimer({ onComplete, onClose }: PomodoroTimerProps) {
     pause,
     reset,
     tick,
+    tickReal,
     completePomodoro,
     setDuration,
   } = useTimerStore();
@@ -72,6 +73,21 @@ export function PomodoroTimer({ onComplete, onClose }: PomodoroTimerProps) {
       Notification.requestPermission();
     }
   }, []);
+
+  // Compensar tempo perdido quando aba fica inativa
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible' && isRunning) {
+        tickReal();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [isRunning, tickReal]);
 
   const handleStartBreak = (minutes: number) => {
     setShowBreakPrompt(false);
