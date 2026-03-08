@@ -79,8 +79,10 @@ export const useTimerStore = create<TimerState>()(
         const lastTick = new Date(state.lastTickAt);
         const secondsPassed = Math.floor((now.getTime() - lastTick.getTime()) / 1000);
         
-        if (secondsPassed <= 0) return state;
+        // Se passou menos de 1 segundo, não compensar
+        if (secondsPassed <= 1) return state;
         
+        // Calcular novo remaining baseado no tempo real
         const newRemaining = Math.max(0, state.remaining - secondsPassed);
         
         if (newRemaining === 0) {
