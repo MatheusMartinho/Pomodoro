@@ -101,7 +101,7 @@ export default function HomePage() {
             </div>
           </section>
 
-          {/* Right column */}
+        {/* Right column */}
           <aside className="space-y-6">
             <div className="rounded-2xl border border-zinc-800/60 bg-zinc-900/40 p-5 backdrop-blur">
               <div className="flex items-center justify-between mb-4">
